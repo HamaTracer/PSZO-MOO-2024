@@ -1,0 +1,186 @@
+#include <iostream>
+#include <iomanip>
+#include <vector>
+#include <algorithm>
+#include <cstdlib>
+#include <ctime>
+
+using namespace std;
+
+// *** 1. RÉSZFELADAT: ALAPOSZTÁLY: ONVEZETO ***
+class Onvezeto {
+private:
+    double sebesseg; // Az önvezető jármű sebessége (km/h)
+
+public:
+    // Default konstruktor
+    Onvezeto() : sebesseg(45.5) {}
+
+    // Getter
+    double getSebesseg() const {
+        return sebesseg;
+    }
+
+    // Setter
+    void setSebesseg(double ujSebesseg) {
+        if (ujSebesseg >= 0) {
+            sebesseg = ujSebesseg;
+        } else {
+            cerr << "A sebesség nem lehet negatív!" << endl;
+        }
+    }
+
+    // Virtuális függvény
+    virtual double Utazas(double tavolsag) const {
+        cout << "Ez az osztály függvénye." << endl;
+        return 0.0;
+    }
+
+    // Operátor túlterhelések
+    bool operator<=(const Onvezeto& masik) const {
+        return this->Utazas(100.0) <= masik.Utazas(100.0);
+    }
+
+    bool operator<(const Onvezeto& masik) const {
+        return this->Utazas(100.0) < masik.Utazas(100.0);
+    }
+
+    // Prefix növelés
+    Onvezeto& operator++() {
+        sebesseg += 10;
+        return *this;
+    }
+
+    // Postfix csökkentés
+    Onvezeto operator--(int) {
+        Onvezeto temp = *this;
+        sebesseg = (sebesseg - 10 >= 0) ? sebesseg - 10 : 0;
+        return temp;
+    }
+
+    // Virtuális destruktor
+    virtual ~Onvezeto() {}
+};
+
+// *** 2. RÉSZFELADAT: LESZÁRMAZOTT OSZTÁLY: AUTO ***
+class Auto : public Onvezeto {
+public:
+    // Konstruktor
+    Auto() {
+        setSebesseg(60.0); // Alapértelmezett sebesség
+    }
+
+    // Utazas függvény
+    double Utazas(double tavolsag) const override {
+        if (getSebesseg() > 0) {
+            double ido = tavolsag / getSebesseg();
+            cout << fixed << setprecision(2);
+            cout << "Autó utazási ideje: " << ido << " óra." << endl;
+            return ido;
+        } else {
+            cerr << "A sebesség nem lehet nulla vagy negatív az utazási idő kiszámításához!" << endl;
+            return 0.0;
+        }
+    }
+};
+
+// *** 3. RÉSZFELADAT: LESZÁRMAZOTT OSZTÁLY: TRAKTOR ***
+class Traktor : public Onvezeto {
+public:
+    // Konstruktor
+    Traktor() {
+        setSebesseg(25.0); // Alapértelmezett sebesség
+    }
+
+    // Utazas függvény
+    double Utazas(double tavolsag) const override {
+        srand(static_cast<unsigned>(time(nullptr)));
+        double randomNyereseg = static_cast<double>(rand() % 10 + 1);
+
+        double lassabbSebesseg = getSebesseg();
+        double lassabbIdo = tavolsag / lassabbSebesseg;
+
+        double gyorsabbSebesseg = lassabbSebesseg + randomNyereseg;
+        double gyorsabbIdo = tavolsag / gyorsabbSebesseg;
+
+        cout << fixed << setprecision(2);
+        cout << "Traktor utazási idő földön dolgozva: " << lassabbIdo << " óra." << endl;
+        cout << "Traktor utazási idő úton haladva: " << gyorsabbIdo << " óra." << endl;
+
+        return gyorsabbIdo;
+    }
+};
+
+// *** 4. RÉSZFELADAT: ÁTLAGSEBESSÉG KISZÁMÍTÁSA ***
+double atlagSebesseg(const vector<Onvezeto*>& jarmuvek) {
+    double osszeg = 0.0;
+    for_each(jarmuvek.begin(), jarmuvek.end(), [&osszeg](Onvezeto* jarmu) {
+        osszeg += jarmu->getSebesseg();
+    });
+    return osszeg / jarmuvek.size();
+}
+
+// *** 5. RÉSZFELADAT: LEGLASSABB JÁRMŰ KIVÁLASZTÁSA ***
+Onvezeto* leglassabbJarmu(const vector<Onvezeto*>& jarmuvek, double tavolsag) {
+    return *max_element(jarmuvek.begin(), jarmuvek.end(), [tavolsag](Onvezeto* a, Onvezeto* b) {
+        return a->Utazas(tavolsag) < b->Utazas(tavolsag);
+    });
+}
+
+// *** FŐPROGRAM: MINDEN RÉSZFELADAT TESZTELÉSE ***
+int main() {
+    // 1. Hozzon létre egy vector<Onvezeto*> tárolót és töltsön fel járművekkel
+    vector<Onvezeto*> jarmuvek;
+    for (int i = 0; i < 3; ++i) {
+        jarmuvek.push_back(new Auto());
+        jarmuvek.push_back(new Traktor());
+    }
+
+    // 2. Kiszámítjuk az átlagsebességet
+    double eredetiAtlagSebesseg = atlagSebesseg(jarmuvek);
+    cout << "Eredeti átlagsebesség: " << eredetiAtlagSebesseg << " km/h" << endl;
+
+    // 3. Véletlenszerű sebességmódosítások (++ vagy -- operátorral)
+    srand(static_cast<unsigned>(time(nullptr)));
+    for (auto* jarmu : jarmuvek) {
+        for (int i = 0; i < 5; ++i) {
+            if (rand() % 2 == 0) {
+                ++(*jarmu); // Növelés
+            } else {
+                (*jarmu)--; // Csökkentés
+            }
+        }
+    }
+
+    // 4. Kiszámítjuk az új átlagsebességet
+    double ujAtlagSebesseg = atlagSebesseg(jarmuvek);
+    cout << "Új átlagsebesség: " << ujAtlagSebesseg << " km/h" << endl;
+    cout << "Átlagsebesség változás: " << (ujAtlagSebesseg - eredetiAtlagSebesseg) << " km/h" << endl;
+
+    // 5. Megkeressük a leglassabb járművet
+    double tavolsag = 100.0;
+    Onvezeto* leglassabb = leglassabbJarmu(jarmuvek, tavolsag);
+    cout << "Leglassabb jármű utazási ideje: " << leglassabb->Utazas(tavolsag) << " óra." << endl;
+
+    // 6. Módosítás és újrarendezés
+    for (auto* jarmu : jarmuvek) {
+        ++(*jarmu);
+        (*jarmu)--;
+    }
+
+    sort(jarmuvek.begin(), jarmuvek.end(), [tavolsag](Onvezeto* a, Onvezeto* b) {
+        return a->Utazas(tavolsag) < b->Utazas(tavolsag);
+    });
+
+    // 7. Kiírjuk az új utazási időket
+    cout << "\nÚjrarendezett utazási idők (100 km távolság):" << endl;
+    for_each(jarmuvek.begin(), jarmuvek.end(), [tavolsag](Onvezeto* jarmu) {
+        jarmu->Utazas(tavolsag);
+    });
+
+    // 8. Memória felszabadítása
+    for (auto* jarmu : jarmuvek) {
+        delete jarmu;
+    }
+
+    return 0;

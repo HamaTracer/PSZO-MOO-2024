@@ -1,0 +1,137 @@
+#include <iostream>
+#include <fstream>
+#include <sstream>
+#include <vector>
+#include <string>
+#include <algorithm>
+#include <numeric> // Az accumulate használatához
+
+using namespace std;
+
+class Vizsgalat {
+private:
+    double temperature;
+    int humidity;
+    double phLevel;
+    string date;
+    int growthDays;
+public:
+    Vizsgalat(double temp, int hum, double ph, string dt, int gd)
+        : temperature(temp), humidity(hum), phLevel(ph), date(dt), growthDays(gd) {}
+
+    double getTemperature() const { return temperature; }
+    int getHumidity() const { return humidity; }
+    double getPH() const { return phLevel; }
+    string getDate() const { return date; }
+    int getGrowthDays() const { return growthDays; }
+};
+
+void kiirVizsgalat(const vector<Vizsgalat>& vizsgalatok, ostream& os) {
+    os << "2-es ID-ju noveny vizsgalatai pH szint alapjan sorbarendezve (osszes adattal):" << endl;
+    for (const auto& vizsgalat : vizsgalatok) {
+        os << "Datum: " << vizsgalat.getDate()
+            << ", Novekedesi napok: " << vizsgalat.getGrowthDays()
+            << ", Homerseklet: " << vizsgalat.getTemperature() << " °C"
+            << ", Paratartalom: " << vizsgalat.getHumidity() << " %"
+            << ", pH szint: " << vizsgalat.getPH() << endl;
+    }
+}
+
+int main() {
+    ifstream file("lettuce.csv");
+    if (!file.is_open()) {
+        cout << "Nem sikerült megnyitni a fájlt!" << endl;
+        return 1;
+    }
+
+    vector<Vizsgalat> vizsgalatok;
+    vector<Vizsgalat> filteredVizsgalatok;
+    string line;
+
+    getline(file, line); // Fejléc kihagyása
+
+    while (getline(file, line)) {
+        stringstream ss(line);
+        string idStr, date, tempStr, humStr, phStr, growthStr;
+        int id;
+        double temp, ph;
+        int hum, growthDays;
+
+        getline(ss, idStr, ';');    // ID
+        getline(ss, date, ';');     // Date
+        getline(ss, tempStr, ';');  // Temperature
+        getline(ss, humStr, ';');   // Humidity
+        getline(ss, phStr, ';');    // PH Level
+        getline(ss, growthStr, ';');// Growth Days
+
+        try {
+            id = stoi(idStr);
+            temp = stod(tempStr);
+            hum = stoi(humStr);
+            ph = stod(phStr);
+            growthDays = stoi(growthStr);
+            vizsgalatok.emplace_back(temp, hum, ph, date, growthDays);
+
+            // Szűrés a 2-es ID-jú vizsgálatokra
+            if (id == 2) {
+                filteredVizsgalatok.emplace_back(temp, hum, ph, date, growthDays);
+            }
+        }
+        catch (exception& e) {
+            cout << "Hiba a sor feldolgozása során: " << line << endl;
+        }
+    }
+
+    file.close();
+
+    // Rendezés a pH szint szerint növekvő sorrendbe a 2-es ID-jú vizsgálatoknál
+    sort(filteredVizsgalatok.begin(), filteredVizsgalatok.end(),
+        [](const Vizsgalat& a, const Vizsgalat& b) {
+            return a.getPH() < b.getPH();
+        });
+
+    // Kiírás konzolra
+    kiirVizsgalat(filteredVizsgalatok, cout);
+
+    // Kiírás fájlba
+    ofstream outFile("eredmeny.txt");
+    if (outFile.is_open()) {
+        kiirVizsgalat(filteredVizsgalatok, outFile);
+        outFile.close();
+        cout << "\nAz eredmenyek a 'eredmeny.txt' fajlba is kiirasra kerultek." << endl;
+    }
+    else {
+        cout << "\nNem sikerült megnyitni az eredmeny.txt fájlt!" << endl;
+    }
+
+    // Átlagok kiszámítása
+    double atlagHomerseklet = accumulate(vizsgalatok.begin(), vizsgalatok.end(), 0.0,
+        [](double osszeg, const Vizsgalat& v) { return osszeg + v.getTemperature(); }) / vizsgalatok.size();
+
+    double atlagParatartalom = accumulate(vizsgalatok.begin(), vizsgalatok.end(), 0.0,
+        [](double osszeg, const Vizsgalat& v) { return osszeg + v.getHumidity(); }) / vizsgalatok.size();
+
+    double atlagPH = accumulate(vizsgalatok.begin(), vizsgalatok.end(), 0.0,
+        [](double osszeg, const Vizsgalat& v) { return osszeg + v.getPH(); }) / vizsgalatok.size();
+
+    // Átlagok kiírása konzolra
+    cout << "\nAtlagos ertekek az osszes vizsgalatra:" << endl;
+    cout << "Atlagos homerseklet: " << atlagHomerseklet << " °C" << endl;
+    cout << "Atlagos paratartalom: " << atlagParatartalom << " %" << endl;
+    cout << "Atlagos pH szint: " << atlagPH << endl;
+
+    // Átlagok kiírása fájlba
+    outFile.open("eredmeny.txt", ios::app);
+    if (outFile.is_open()) {
+        outFile << "\nAtlagos ertekek az osszes vizsgalatra:" << endl;
+        outFile << "Atlagos homerseklet: " << atlagHomerseklet << " °C" << endl;
+        outFile << "Atlagos paratartalom: " << atlagParatartalom << " %" << endl;
+        outFile << "Atlagos pH szint: " << atlagPH << endl;
+        outFile.close();
+    }
+    else {
+        cout << "\nNem sikerült megnyitni az eredmeny.txt fájlt az átlagok kiírásához!" << endl;
+    }
+
+    return 0;
+}

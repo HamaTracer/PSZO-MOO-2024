@@ -1,0 +1,209 @@
+#include <iostream>
+#include <fstream>
+#include <cstdlib>
+#include <ctime>
+#include <string>
+#include <limits>
+
+using namespace std;
+
+// *** jatekos osztály ***
+// Privát adattagok: nev (string), pontszam (int), talalat (int),
+// jatekos_szam (statikus int), attack (int), defense (int)
+// Getter és setter függvények az adattagokhoz
+// Konstruktor: paramétere a név, pontszam=0, talalat=0
+// Az attack és defense értéket később a General függvény állítja be
+
+class jatekos {
+private:
+    string nev;
+    int pontszam;
+    int talalat;
+    int attack;
+    int defense;
+    static int jatekos_szam; // statikus adattag a játékosok számának nyilvántartására
+
+public:
+    jatekos(const string& n) : nev(n), pontszam(0), talalat(0), attack(0), defense(0) {
+        jatekos_szam++;
+    }
+
+    // Getterek
+    string getNev() const { return nev; }
+    int getPontszam() const { return pontszam; }
+    int getTalalat() const { return talalat; }
+    int getAttack() const { return attack; }
+    int getDefense() const { return defense; }
+
+    // Setterek
+    void setNev(const string& n) { nev = n; }
+    void setPontszam(int p) { pontszam = p; }
+    void setTalalat(int t) { talalat = t; }
+    void setAttack(int a) { attack = a; }
+    void setDefense(int d) { defense = d; }
+
+    static int getJatekosSzam() { return jatekos_szam; }
+
+    void novTalalatPont() {
+        talalat++;
+        pontszam++;
+    }
+};
+
+int jatekos::jatekos_szam = 0; // Statikus adattag definíciója
+
+
+// *** General függvény ***
+// Véletlenszerűen oszt el 10 egységet attack és defense között
+void General(jatekos& j) {
+    int sum = 10;
+    int att = rand() % (sum + 1); // att 0-tól 10-ig
+    int def = sum - att;
+    j.setAttack(att);
+    j.setDefense(def);
+}
+
+
+// *** csata osztály ***
+// Tartalmaz egy max 10 elemű jatekos tömböt.
+// Konstruktorban inicializáljuk, destruktorban felszabadítjuk a dinamikusan létrehozott játékosokat.
+// Hozzaad függvény: új játékos hozzáadása, ha van hely.
+// Csatra_fel: minden játékos 5-ször dob hógolyót, véletlen célponttal és valószínűségi találatvizsgálattal.
+// Rendezes: buborékrendezés pontszam, majd talalat alapján csökkenő sorrendbe.
+// Kiir, KiirFajlba: Eredmények kiírása.
+
+class csata {
+private:
+    jatekos* jatekosok[10];
+    int aktualis_letszam;
+
+public:
+    csata() : aktualis_letszam(0) {
+        for (int i = 0; i < 10; i++) {
+            jatekosok[i] = nullptr;
+        }
+    }
+
+    ~csata() {
+        for (int i = 0; i < aktualis_letszam; i++) {
+            delete jatekosok[i];
+            jatekosok[i] = nullptr;
+        }
+    }
+
+    void Hozzaad(const string& nev) {
+        if (aktualis_letszam < 10) {
+            jatekos* uj = new jatekos(nev);
+            // Attack/defense beállítása a General függvénnyel
+            General(*uj);
+            jatekosok[aktualis_letszam] = uj;
+            aktualis_letszam++;
+        }
+        else {
+            cout << nev << " mar nem tud csatlakozni ebben a korben" << endl;
+        }
+    }
+
+    void Csatra_fel() {
+        for (int i = 0; i < aktualis_letszam; i++) {
+            for (int dob = 0; dob < 5; dob++) {
+                int cel;
+                do {
+                    cel = rand() % aktualis_letszam;
+                } while (cel == i); // A célpont ne legyen ugyanaz a játékos
+
+                int att = jatekosok[i]->getAttack();
+                int def = jatekosok[cel]->getDefense();
+
+                // Példa valószínűségi formula:
+                double p = (att - def + 10) * 0.05;
+                if (p < 0) p = 0;
+                if (p > 1) p = 1;
+
+                double r = (double)rand() / RAND_MAX;
+                if (r < p) {
+                    // Találat
+                    jatekosok[i]->novTalalatPont();
+                }
+            }
+        }
+    }
+
+    void Rendezes() {
+        bool csere = true;
+        while (csere) {
+            csere = false;
+            for (int i = 0; i < aktualis_letszam - 1; i++) {
+                int p1 = jatekosok[i]->getPontszam();
+                int p2 = jatekosok[i + 1]->getPontszam();
+                int t1 = jatekosok[i]->getTalalat();
+                int t2 = jatekosok[i + 1]->getTalalat();
+
+                // Csökkenő sorrend
+                if ((p1 < p2) || ((p1 == p2) && (t1 < t2))) {
+                    jatekos* tmp = jatekosok[i];
+                    jatekosok[i] = jatekosok[i + 1];
+                    jatekosok[i + 1] = tmp;
+                    csere = true;
+                }
+            }
+        }
+    }
+
+    void Kiir() {
+        cout << "Nev;Pontszam;Talalat" << endl;
+        for (int i = 0; i < aktualis_letszam; i++) {
+            cout << jatekosok[i]->getNev() << ";"
+                << jatekosok[i]->getPontszam() << ";"
+                << jatekosok[i]->getTalalat() << endl;
+        }
+    }
+
+    void KiirFajlba(const string& fajlnev) {
+        ofstream out(fajlnev.c_str());
+        if (!out) {
+            cerr << "Hiba a fajl megnyitasakor: " << fajlnev << endl;
+            return;
+        }
+        out << "Nev;Pontszam;Talalat" << endl;
+        for (int i = 0; i < aktualis_letszam; i++) {
+            out << jatekosok[i]->getNev() << ";"
+                << jatekosok[i]->getPontszam() << ";"
+                << jatekosok[i]->getTalalat() << endl;
+        }
+        out.close();
+    }
+};
+
+int main() {
+    srand((unsigned int)time(NULL));
+
+    csata c;
+
+    // A felhasználótól bekérjük, hány játékost szeretne hozzáadni
+    int db;
+    cout << "Hany jatekost szeretne hozzaadni? (max 10): ";
+    cin >> db;
+    cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n'); // newline eldobása
+
+    for (int i = 0; i < db; i++) {
+        cout << "Adja meg a(z) " << i + 1 << ". jatekos nevet: ";
+        string nev;
+        std::getline(cin, nev);
+        c.Hozzaad(nev);
+    }
+
+    // Lefuttatjuk a szimulációt
+    c.Csatra_fel();
+
+    // Rendezés pontszám és találat alapján csökkenő sorrendbe
+    c.Rendezes();
+
+    // Eredmények kiírása konzolra
+    c.Kiir();
+
+    // Eredmények kiírása fájlba
+    c.KiirFajlba("eredmeny.csv");
+
+    return 0;
+}

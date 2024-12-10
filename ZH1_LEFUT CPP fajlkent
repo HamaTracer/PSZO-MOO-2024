@@ -8,12 +8,12 @@
 
 using namespace std;
 
-// *** jatekos osztály ***
-// Privát adattagok: nev (string), pontszam (int), talalat (int),
+// *** jatekos osztÃ¡ly ***
+// PrivÃ¡t adattagok: nev (string), pontszam (int), talalat (int),
 // jatekos_szam (statikus int), attack (int), defense (int)
-// Getter és setter függvények az adattagokhoz
-// Konstruktor: paramétere a név, pontszam=0, talalat=0
-// Az attack és defense értéket késõbb a General függvény állítja be
+// Getter Ã©s setter fÃ¼ggvÃ©nyek az adattagokhoz
+// Konstruktor: paramÃ©tere a nÃ©v, pontszam=0, talalat=0
+// Az attack Ã©s defense Ã©rtÃ©ket kÃ©sÃµbb a General fÃ¼ggvÃ©ny Ã¡llÃ­tja be
 
 class jatekos {
 private:
@@ -22,7 +22,7 @@ private:
     int talalat;
     int attack;
     int defense;
-    static int jatekos_szam; // statikus adattag a játékosok számának nyilvántartására
+    static int jatekos_szam; // statikus adattag a jÃ¡tÃ©kosok szÃ¡mÃ¡nak nyilvÃ¡ntartÃ¡sÃ¡ra
 
 public:
     jatekos(const string& n) : nev(n), pontszam(0), talalat(0), attack(0), defense(0) {
@@ -51,27 +51,27 @@ public:
     }
 };
 
-int jatekos::jatekos_szam = 0; // Statikus adattag definíciója
+int jatekos::jatekos_szam = 0; // Statikus adattag definÃ­ciÃ³ja
 
 
-// *** General függvény ***
-// Véletlenszerûen oszt el 10 egységet attack és defense között
+// *** General fÃ¼ggvÃ©ny ***
+// VÃ©letlenszerÃ»en oszt el 10 egysÃ©get attack Ã©s defense kÃ¶zÃ¶tt
 void General(jatekos& j) {
     int sum = 10;
-    int att = rand() % (sum + 1); // att 0-tól 10-ig
+    int att = rand() % (sum + 1); // att 0-tÃ³l 10-ig
     int def = sum - att;
     j.setAttack(att);
     j.setDefense(def);
 }
 
 
-// *** csata osztály ***
-// Tartalmaz egy max 10 elemû jatekos tömböt.
-// Konstruktorban inicializáljuk, destruktorban felszabadítjuk a dinamikusan létrehozott játékosokat.
-// Hozzaad függvény: új játékos hozzáadása, ha van hely.
-// Csatra_fel: minden játékos 5-ször dob hógolyót, véletlen célponttal és valószínûségi találatvizsgálattal.
-// Rendezes: buborékrendezés pontszam, majd talalat alapján csökkenõ sorrendbe.
-// Kiir, KiirFajlba: Eredmények kiírása.
+// *** csata osztÃ¡ly ***
+// Tartalmaz egy max 10 elemÃ» jatekos tÃ¶mbÃ¶t.
+// Konstruktorban inicializÃ¡ljuk, destruktorban felszabadÃ­tjuk a dinamikusan lÃ©trehozott jÃ¡tÃ©kosokat.
+// Hozzaad fÃ¼ggvÃ©ny: Ãºj jÃ¡tÃ©kos hozzÃ¡adÃ¡sa, ha van hely.
+// Csatra_fel: minden jÃ¡tÃ©kos 5-szÃ¶r dob hÃ³golyÃ³t, vÃ©letlen cÃ©lponttal Ã©s valÃ³szÃ­nÃ»sÃ©gi talÃ¡latvizsgÃ¡lattal.
+// Rendezes: buborÃ©krendezÃ©s pontszam, majd talalat alapjÃ¡n csÃ¶kkenÃµ sorrendbe.
+// Kiir, KiirFajlba: EredmÃ©nyek kiÃ­rÃ¡sa.
 
 class csata {
 private:
@@ -95,7 +95,7 @@ public:
     void Hozzaad(const string& nev) {
         if (aktualis_letszam < 10) {
             jatekos* uj = new jatekos(nev);
-            // Attack/defense beállítása a General függvénnyel
+            // Attack/defense beÃ¡llÃ­tÃ¡sa a General fÃ¼ggvÃ©nnyel
             General(*uj);
             jatekosok[aktualis_letszam] = uj;
             aktualis_letszam++;
@@ -111,19 +111,19 @@ public:
                 int cel;
                 do {
                     cel = rand() % aktualis_letszam;
-                } while (cel == i); // A célpont ne legyen ugyanaz a játékos
+                } while (cel == i); // A cÃ©lpont ne legyen ugyanaz a jÃ¡tÃ©kos
 
                 int att = jatekosok[i]->getAttack();
                 int def = jatekosok[cel]->getDefense();
 
-                // Példa valószínûségi formula:
+                // PÃ©lda valÃ³szÃ­nÃ»sÃ©gi formula:
                 double p = (att - def + 10) * 0.05;
                 if (p < 0) p = 0;
                 if (p > 1) p = 1;
 
                 double r = (double)rand() / RAND_MAX;
                 if (r < p) {
-                    // Találat
+                    // TalÃ¡lat
                     jatekosok[i]->novTalalatPont();
                 }
             }
@@ -140,7 +140,7 @@ public:
                 int t1 = jatekosok[i]->getTalalat();
                 int t2 = jatekosok[i + 1]->getTalalat();
 
-                // Csökkenõ sorrend
+                // CsÃ¶kkenÃµ sorrend
                 if ((p1 < p2) || ((p1 == p2) && (t1 < t2))) {
                     jatekos* tmp = jatekosok[i];
                     jatekosok[i] = jatekosok[i + 1];
@@ -181,11 +181,11 @@ int main() {
 
     csata c;
 
-    // A felhasználótól bekérjük, hány játékost szeretne hozzáadni
+    // A felhasznÃ¡lÃ³tÃ³l bekÃ©rjÃ¼k, hÃ¡ny jÃ¡tÃ©kost szeretne hozzÃ¡adni
     int db;
     cout << "Hany jatekost szeretne hozzaadni? (max 10): ";
     cin >> db;
-    cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n'); // newline eldobása
+    cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n'); // newline eldobÃ¡sa
 
     for (int i = 0; i < db; i++) {
         cout << "Adja meg a(z) " << i + 1 << ". jatekos nevet: ";
@@ -194,16 +194,16 @@ int main() {
         c.Hozzaad(nev);
     }
 
-    // Lefuttatjuk a szimulációt
+    // Lefuttatjuk a szimulÃ¡ciÃ³t
     c.Csatra_fel();
 
-    // Rendezés pontszám és találat alapján csökkenõ sorrendbe
+    // RendezÃ©s pontszÃ¡m Ã©s talÃ¡lat alapjÃ¡n csÃ¶kkenÃµ sorrendbe
     c.Rendezes();
 
-    // Eredmények kiírása konzolra
+    // EredmÃ©nyek kiÃ­rÃ¡sa konzolra
     c.Kiir();
 
-    // Eredmények kiírása fájlba
+    // EredmÃ©nyek kiÃ­rÃ¡sa fÃ¡jlba
     c.KiirFajlba("eredmeny.csv");
 
     return 0;
